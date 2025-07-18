@@ -1,0 +1,61 @@
+(async () => {
+  const delay = ms => new Promise(res => setTimeout(res, ms));
+  let deletedCount = 0;
+
+  // Scroll to bottom of page to load all content
+  const autoScrollToBottom = async () => {
+    let lastScrollHeight = 0;
+    let sameCount = 0;
+
+    while (sameCount < 5) {
+      window.scrollTo(0, document.body.scrollHeight);
+      await delay(1000);
+
+      const currentHeight = document.body.scrollHeight;
+      if (currentHeight === lastScrollHeight) {
+        sameCount++;
+      } else {
+        sameCount = 0;
+        lastScrollHeight = currentHeight;
+      }
+    }
+
+    console.log('Scrolled to bottom. Starting deletion...');
+  };
+
+  const clickMenuAndDelete = async (menuButton) => {
+    menuButton.click();
+    await delay(1000); // Wait for the overlay to open
+
+    const repostButton = document.querySelector(
+      'button.repostOverlay__formButtonDelete'
+    );
+
+    if (repostButton) {
+      repostButton.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+      deletedCount++;
+      console.log(`Unreposted ${deletedCount}`);
+      await delay(1500);
+    } else {
+      console.log('Delete Repost button not found');
+    }
+  };
+
+  const processAll = async () => {
+    const menuButtons = [...document.querySelectorAll('[aria-label="Unpost / Edit Repost"]')];
+    console.log(`🔍 Found ${menuButtons.length} reposts.`);
+
+    for (let i = 0; i < menuButtons.length; i++) {
+      await clickMenuAndDelete(menuButtons[i]);
+      await delay(1000);
+    }
+
+    console.log(`Total reposts removed: ${deletedCount}`);
+  };
+
+  // First scroll to bottom
+  await autoScrollToBottom();
+
+  // Then process reposts
+  await processAll();
+})();
